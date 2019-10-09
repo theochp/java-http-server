@@ -26,23 +26,26 @@ public class RequestParser {
         this.request = new HttpRequest();
     }
 
-    public HttpRequest getRequest() throws UnsupportMimeTypeException {
+    public HttpRequest getRequest() {
         parseRequestLine();
         parseHeaders();
-        if(request.getMethod()== HttpMethod.POST) {
-            System.out.println("post");
+        if(request.getMethod() == HttpMethod.POST) {
+            if(request.getContentType() != null && !"".equals(request.getContentType())) {
+                try {
+                    BodyParser bodyParser = BodyParser.of(request.getContentType());
+                    char[] buffer = new char[request.getContentLength()];
+                    try {
+                        inputReader.read(buffer);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    bodyParser.parse(buffer, request);
+                } catch (UnsupportMimeTypeException e) {
+
+                }
+            }
         }
 
-        if(request.getContentType() != null && !"".equals(request.getContentType())) {
-            BodyParser bodyParser = BodyParser.of(request.getContentType());
-            char[] buffer = new char[request.getContentLength()];
-            try {
-                inputReader.read(buffer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            bodyParser.parse(buffer, request);
-        }
         return request;
     }
 
