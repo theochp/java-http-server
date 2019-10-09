@@ -20,12 +20,30 @@ public class ResourceManager {
                 byte[] buffer = new byte[BUFFER_SIZE];
                 int read = input.read(buffer);
                 input.close();
-                return Arrays.copyOfRange(buffer, 0, read);
+                if(read > 0) {
+                    return Arrays.copyOfRange(buffer, 0, read);
+                } else {
+                    return new byte[0];
+                }
             } catch (IOException e) {
                 return new byte[0];
             }
         }
         return new byte[0];
+    }
+
+    public String getResourcePath(String filename) {
+        if(filename.startsWith("/"))
+            filename = filename.replaceFirst("/", "");
+        return SERVER_BASE_PATH + "\\"  + filename;
+    }
+
+    public boolean fileExists(String filename) {
+        return new File(getResourcePath(filename)).exists();
+    }
+
+    public File getBaseDirectory() {
+        return new File(SERVER_BASE_PATH);
     }
 
 }

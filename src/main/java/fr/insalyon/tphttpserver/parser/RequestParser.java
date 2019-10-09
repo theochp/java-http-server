@@ -20,29 +20,33 @@ public class RequestParser {
 
     private BufferedReader inputReader;
     private HttpRequest request;
+    private final HttpHeaderParser httpHeaderParser = new HttpHeaderParser();
 
     public RequestParser(final InputStream input) {
         this.inputReader = new BufferedReader(new InputStreamReader(input));
         this.request = new HttpRequest();
     }
 
-    public HttpRequest getRequest() throws UnsupportMimeTypeException {
+    public HttpRequest getRequest() {
         parseRequestLine();
         parseHeaders();
-        if(request.getMethod()== HttpMethod.POST) {
-            System.out.println("post");
+        if(request.getMethod() == HttpMethod.POST) {
+            if(request.getContentType() != null && !"".equals(request.getContentType())) {
+                try {
+                    BodyParser bodyParser = BodyParser.of(request.getContentType());
+                    char[] buffer = new char[request.getContentLength()];
+                    try {
+                        inputReader.read(buffer);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    bodyParser.parse(buffer, request);
+                } catch (UnsupportMimeTypeException e) {
+
+                }
+            }
         }
 
-        if(request.getContentType() != null && !"".equals(request.getContentType())) {
-            BodyParser bodyParser = BodyParser.of(request.getContentType());
-            char[] buffer = new char[request.getContentLength()];
-            try {
-                inputReader.read(buffer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            bodyParser.parse(buffer, request);
-        }
         return request;
     }
 
@@ -78,29 +82,10 @@ public class RequestParser {
     }
 
     private void parseHeaders() {
-        try {
-            String line = inputReader.readLine();
-            while(!"".equals(line)) {
-                HttpHeader httpHeader = parseHttpHeader(line);
-                if(httpHeader != null) {
-                    request.addHeader(httpHeader);
-                }
-                line = inputReader.readLine();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        List<HttpHeader> headers = httpHeaderParser.parse(inputReader);
+        for(HttpHeader h : headers) {
+            request.addHeader(h);
         }
-    }
-
-    private HttpHeader parseHttpHeader(final String line) {
-        Pattern pattern = Pattern.compile("([A-Za-z0-9-]+)\\s?:\\s?(.*)");
-        Matcher matcher = pattern.matcher(line.trim());
-        if(matcher.find()) {
-            String name = matcher.group(1);
-            String value = matcher.group(2);
-            return new HttpHeader(name, value);
-        }
-        return null;
     }
 
 }
