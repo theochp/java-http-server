@@ -3,11 +3,10 @@ package fr.insalyon.tphttpserver.handler;
 import fr.insalyon.tphttpserver.fs.ResourceManager;
 import fr.insalyon.tphttpserver.http.HttpRequest;
 import fr.insalyon.tphttpserver.parser.RequestParser;
-import fr.insalyon.tphttpserver.serialiser.ResourceSerialiser;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.Socket;
-import java.util.Arrays;
 
 public class ClientThread extends Thread {
 
@@ -34,35 +33,9 @@ public class ClientThread extends Thread {
     }
 
     private void handleRequest(HttpRequest request) {
-        switch (request.getMethod()) {
-            case GET: handleGet(request);break;
-            case POST: handlePost(request);break;
-            case PUT: handlePut(request); break;
-        }
-    }
-
-    private void handleGet(final HttpRequest request) {
-        try {
-            String resourcePath = getResourceUrl(request);
-            if(resourceManager.fileExists(resourcePath))  {
-                ContentType contentType = getResourceType(request);
-                ResourceSerialiser serialiser = contentType.getSerialiser();
-                if(serialiser != null) {
-                    serialiser.serialise(request, out);
-                } else {
-                    byte[] content = resourceManager.readFileContents(getResourceUrl(request));
-                    out.println(request.getProtocolVersion() + " 200 OK");
-                    out.println("Content-Type: "+getResourceType(request).code);
-                    out.println("Content-Length: " + content.length);
-                    out.println("Connection: close");
-                    out.print("\n");
-                    out.write(content);
-                }
-            } else {
-                send404(request);
-            }
-        } catch (IOException e) {
-            send404(request);
+        RequestHandler requestHandler = RequestHandler.of(request);
+        if(requestHandler != null) {
+            requestHandler.handle(request, out);
         }
     }
 
@@ -75,54 +48,4 @@ public class ClientThread extends Thread {
         out.write("Not found".getBytes(), 0, 9);
     }
 
-    private void handlePost(final HttpRequest request) {
-        handleGet(request);
-    }
-
-
-    private void handlePut(HttpRequest request) {
-        File file = resourceManager.getFile(request.getResource());
-        boolean created = false;
-        try {
-            if(!file.exists())
-                created = file.createNewFile();
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(request.getRequestBody().getContent());
-            fos.close();
-        } catch (FileNotFoundException e) {
-            // Send 404
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if(created)
-            out.println(request.getProtocolVersion() + " 201 Created");
-        else
-            out.println(request.getProtocolVersion() + " 200 OK");
-        out.println("Content-Length: 0");
-        out.println("Connection: close");
-        out.print("\n");
-    }
-
-    private String getResourceUrl(HttpRequest request) {
-        String resource = request.getResource();
-        if("/".equals(resource)) {
-            return "index.html";
-        } else {
-            return resource;
-        }
-    }
-
-    private ContentType getResourceType(HttpRequest request) {
-        for(ContentType type : ContentType.values()) {
-            if(Arrays.stream(type.extensions).anyMatch(s->getFileExtension(getResourceUrl(request)).equals(s))) {
-                return type;
-            }
-        }
-        return ContentType.TEXT_PLAIN;
-    }
-
-    private String getFileExtension(String filename) {
-        return filename.substring(filename.lastIndexOf(".") + 1);
-    }
 }
