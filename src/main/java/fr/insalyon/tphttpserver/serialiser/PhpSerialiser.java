@@ -5,14 +5,13 @@ import fr.insalyon.tphttpserver.http.HttpHeader;
 import fr.insalyon.tphttpserver.http.HttpRequest;
 import fr.insalyon.tphttpserver.parser.HttpHeaderParser;
 
-import java.io.*;
-import java.nio.CharBuffer;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PhpSerialiser extends ResourceSerialiser {
 
@@ -30,15 +29,19 @@ public class PhpSerialiser extends ResourceSerialiser {
                 List<HttpHeader> headers = httpHeaderParser.parse(bufferedReader);
                 char[] buffer = new char[DEFAULT_BUFFER_SIZE];
                 int read = bufferedReader.read(buffer);
-                buffer = Arrays.copyOfRange(buffer, 0, read);
-                byte[] content = new String(buffer).getBytes(StandardCharsets.UTF_8);
                 out.println(request.getProtocolVersion() + " 200 OK");
+                if(read > -1)
+                    buffer = Arrays.copyOfRange(buffer, 0, read);
+                else
+                    read = 0;
+                byte[] content = new String(buffer).getBytes(StandardCharsets.UTF_8);
                 out.println("Content-Length: "+read);
                 for(HttpHeader header: headers) {
                     out.println(header.getName()+": "+header.getValue());
                 }
                 out.println("\n");
                 out.write(content);
+
                 bufferedReader.close();
                 exec.destroy();
             }
