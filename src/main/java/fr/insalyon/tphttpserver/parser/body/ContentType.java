@@ -4,9 +4,9 @@ public enum ContentType {
 
     FORM_URL_ENCODED("application/x-www-form-urlencoded", new FormUrlEncodedBodyParser()),
     FORM_MULTIPART("multipart/form-data", new FormUrlEncodedBodyParser()),
-    TEXT_PLAIN("text/plain", new FormUrlEncodedBodyParser()),
-    TEXT_HTML("text/html", new FormUrlEncodedBodyParser()),
-    APPLICATION_JSON("application/json", new FormUrlEncodedBodyParser());
+    TEXT_PLAIN("text/plain", new TextBodyParser()),
+    TEXT_HTML("text/html", new TextBodyParser()),
+    APPLICATION_JSON("application/json", new TextBodyParser());
 
     private String code;
     private BodyParser parser;

@@ -28,34 +28,20 @@ public class RequestParser {
     }
 
     public HttpRequest getRequest() {
-        parseRequestLine();
-        parseHeaders();
-        if(request.getMethod() == HttpMethod.POST) {
-            if(request.getContentType() != null && !"".equals(request.getContentType())) {
-                try {
-                    BodyParser bodyParser = BodyParser.of(request.getContentType());
-                    char[] buffer = new char[request.getContentLength()];
-                    try {
-                        inputReader.read(buffer);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    bodyParser.parse(buffer, request);
-                } catch (UnsupportMimeTypeException e) {
-
-                }
-            }
+        boolean hasLine = parseRequestLine();
+        if(hasLine) {
+            parseHeaders();
+            parseBody();
+            return request;
         }
-
-        return request;
+        return null;
     }
 
-    private void parseRequestLine() {
+    private boolean parseRequestLine() {
         try {
             String requestLine = inputReader.readLine();
-
-            Pattern pattern = Pattern.compile("([A-Z]{3,6}) (\\S+) (HTTP/[0-9.]+)");
-            try {
+            if(requestLine != null) {
+                Pattern pattern = Pattern.compile("([A-Z]{3,6}) (\\S+) (HTTP/[0-9.]+)");
                 Matcher matcher = pattern.matcher(requestLine);
                 if(matcher.find()) {
                     String method = matcher.group(1);
@@ -71,14 +57,14 @@ public class RequestParser {
                     request.setResource(resource);
                     request.setProtocolVersion(httpVersion);
                     request.setQueryParameters(queryParams);
-                }
-            } catch (NullPointerException e) {
-                System.out.println("npe:"+requestLine);
+                    return true;
+                } else
+                    return false;
             }
-
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return false;
     }
 
     private void parseHeaders() {
@@ -88,4 +74,20 @@ public class RequestParser {
         }
     }
 
+    private void parseBody() {
+        if(request.getContentType() != null && !"".equals(request.getContentType())) {
+            try {
+                BodyParser bodyParser = BodyParser.of(request.getContentType());
+                char[] buffer = new char[request.getContentLength()];
+                try {
+                    inputReader.read(buffer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                request.setRequestBody(bodyParser.parse(buffer, request));
+            } catch (UnsupportMimeTypeException e) {
+                System.out.println("Unsupport mime type");
+            }
+        }
+    }
 }

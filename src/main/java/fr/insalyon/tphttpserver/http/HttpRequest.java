@@ -10,7 +10,7 @@ public class HttpRequest {
     private String protocolVersion;
     private final List<HttpHeader> headers = new ArrayList<>();
     private List<HttpParameter> queryParameters = new ArrayList<>();
-    private List<HttpParameter> bodyParameters = new ArrayList<>();
+    private HttpRequestBody requestBody;
 
     /* Required HTTP headers */
     private String host;
@@ -76,15 +76,16 @@ public class HttpRequest {
         return queryParameters;
     }
 
+    public HttpRequestBody getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(HttpRequestBody requestBody) {
+        this.requestBody = requestBody;
+    }
+
     public void setQueryParameters(List<HttpParameter> queryParams) {
         queryParameters = queryParams;
     }
 
-    public List<HttpParameter> getBodyParameters() {
-        return bodyParameters;
-    }
-
-    public void setBodyParameters(List<HttpParameter> bodyParameters) {
-        this.bodyParameters = bodyParameters;
-    }
 }

@@ -41,7 +41,7 @@ public class TemplateSerialiser extends ResourceSerialiser{
         if(parameter.isPresent())
             return parameter.get().getValue();
         else {
-            parameter = request.getBodyParameters().stream().filter(p -> p.getName().equals(name))
+            parameter = request.getRequestBody().getParameters().stream().filter(p -> p.getName().equals(name))
                     .findFirst();
             if(parameter.isPresent())
                 return parameter.get().getValue();

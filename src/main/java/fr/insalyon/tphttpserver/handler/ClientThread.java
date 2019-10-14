@@ -5,8 +5,7 @@ import fr.insalyon.tphttpserver.http.HttpRequest;
 import fr.insalyon.tphttpserver.parser.RequestParser;
 import fr.insalyon.tphttpserver.serialiser.ResourceSerialiser;
 
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
 
@@ -27,7 +26,8 @@ public class ClientThread extends Thread {
 
             RequestParser parser = new RequestParser(socket.getInputStream());
             HttpRequest request = parser.getRequest();
-            handleRequest(request);
+            if(request != null)
+                handleRequest(request);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -37,6 +37,7 @@ public class ClientThread extends Thread {
         switch (request.getMethod()) {
             case GET: handleGet(request);break;
             case POST: handlePost(request);break;
+            case PUT: handlePut(request); break;
         }
     }
 
@@ -76,6 +77,31 @@ public class ClientThread extends Thread {
 
     private void handlePost(final HttpRequest request) {
         handleGet(request);
+    }
+
+
+    private void handlePut(HttpRequest request) {
+        File file = resourceManager.getFile(request.getResource());
+        boolean created = false;
+        try {
+            if(!file.exists())
+                created = file.createNewFile();
+            FileOutputStream fos = new FileOutputStream(file);
+            fos.write(request.getRequestBody().getContent());
+            fos.close();
+        } catch (FileNotFoundException e) {
+            // Send 404
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(created)
+            out.println(request.getProtocolVersion() + " 201 Created");
+        else
+            out.println(request.getProtocolVersion() + " 200 OK");
+        out.println("Content-Length: 0");
+        out.println("Connection: close");
+        out.print("\n");
     }
 
     private String getResourceUrl(HttpRequest request) {

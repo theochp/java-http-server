@@ -46,4 +46,10 @@ public class ResourceManager {
         return new File(SERVER_BASE_PATH);
     }
 
+    public File getFile(String path) {
+        if(path.startsWith("/") || path.startsWith("\\"))
+            path = path.substring(1);
+        return new File(SERVER_BASE_PATH+"\\"+path);
+    }
+
 }
