@@ -16,7 +16,7 @@ public class PutRequestHandler extends RequestHandler {
             fos.write(request.getRequestBody().getContent());
             fos.close();
         } catch (FileNotFoundException e) {
-            // Send 404
+            response500(request, out);
         } catch (IOException e) {
             e.printStackTrace();
         }

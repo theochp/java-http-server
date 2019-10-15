@@ -26,10 +26,10 @@ public class GetRequestHandler extends RequestHandler {
                     out.write(content);
                 }
             } else {
-                //TODO: 404
+                response404(request, out);
             }
         } catch (IOException e) {
-            //TODO: 404
+            response404(request, out);
         }
     }
 }
