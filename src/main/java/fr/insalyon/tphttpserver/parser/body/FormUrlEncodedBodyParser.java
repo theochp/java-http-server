@@ -12,6 +12,7 @@ public class FormUrlEncodedBodyParser extends BodyParser {
         QueryStringParser qsp = new QueryStringParser();
         HttpRequestBody requestBody = new HttpRequestBody();
         requestBody.setParameters(qsp.parse(inputString));
+        request.setFormData(inputString);
         return requestBody;
     }
 }

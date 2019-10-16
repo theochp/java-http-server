@@ -16,6 +16,7 @@ public class HttpRequest {
     private String host;
     private int contentLength = 0;
     private String contentType;
+    private String formData;
 
     public HttpMethod getMethod() {
         return method;
@@ -82,6 +83,14 @@ public class HttpRequest {
 
     public void setRequestBody(HttpRequestBody requestBody) {
         this.requestBody = requestBody;
+    }
+
+    public String getFormData() {
+        return formData;
+    }
+
+    public void setFormData(String formData) {
+        this.formData = formData;
     }
 
     public void setQueryParameters(List<HttpParameter> queryParams) {

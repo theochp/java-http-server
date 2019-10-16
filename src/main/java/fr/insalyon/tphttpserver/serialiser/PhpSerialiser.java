@@ -5,12 +5,8 @@ import fr.insalyon.tphttpserver.http.HttpHeader;
 import fr.insalyon.tphttpserver.http.HttpRequest;
 import fr.insalyon.tphttpserver.parser.HttpHeaderParser;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 
 public class PhpSerialiser extends ResourceSerialiser {
@@ -25,22 +21,29 @@ public class PhpSerialiser extends ResourceSerialiser {
         try {
             Process exec = exec(request);
             if(exec != null) {
+                if(request.getFormData() != null) {
+                    OutputStream outputStream = exec.getOutputStream();
+                    outputStream.write(request.getFormData().getBytes());
+                    outputStream.close();
+                }
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(exec.getInputStream()));
                 List<HttpHeader> headers = httpHeaderParser.parse(bufferedReader);
                 char[] buffer = new char[DEFAULT_BUFFER_SIZE];
                 int read = bufferedReader.read(buffer);
                 out.println(request.getProtocolVersion() + " 200 OK");
-                if(read > -1)
-                    buffer = Arrays.copyOfRange(buffer, 0, read);
-                else
-                    read = 0;
-                byte[] content = new String(buffer).getBytes(StandardCharsets.UTF_8);
-                out.println("Content-Length: "+read);
+                byte[] content = null;
+                if(read > 0) {
+                    content = new String(buffer).getBytes(StandardCharsets.UTF_8);
+                    out.println("Content-Length: "+content.length);
+                } else {
+                    out.println("Content-Length: 0");
+                }
                 for(HttpHeader header: headers) {
                     out.println(header.getName()+": "+header.getValue());
                 }
                 out.println("\n");
-                out.write(content);
+                if(content != null)
+                    out.write(content);
 
                 bufferedReader.close();
                 exec.destroy();
@@ -62,12 +65,18 @@ public class PhpSerialiser extends ResourceSerialiser {
         processBuilder.environment().put("QUERY_STRING", "id=123&name=title&parm=333");
         processBuilder.environment().put("REQUEST_METHOD", request.getMethod().name());
         processBuilder.environment().put("REDIRECT_STATUS", "1");
+        processBuilder.environment().put("CONTENT_LENGTH", String.valueOf(request.getContentLength()));
+        if(request.getContentType() != null)
+            processBuilder.environment().put("CONTENT_TYPE", request.getContentType());
         // add request headers to cgi env
         for(HttpHeader header : request.getHeaders()) {
             processBuilder.environment().put(headerNameToCgiEnv(header.getName()), header.getValue());
         }
         // start process
-        processBuilder.command("php-cgi");
+        if(request.getFormData() != null)
+            processBuilder.command("php-cgi", filename, request.getFormData());
+        else
+            processBuilder.command("php-cgi", filename);
         try {
             return processBuilder.start();
         } catch (IOException e) {
