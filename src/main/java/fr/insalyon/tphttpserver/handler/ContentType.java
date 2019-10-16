@@ -12,6 +12,8 @@ public enum ContentType {
     IMAGE_JPEG("image/jpeg", "jpeg"),
     IMAGE_JPG("image/jpg", "jpg"),
     IMAGE_GIF("image/gif", "gif"),
+    VIDEO_MP4("video/mp4", "mp4"),
+    MUSIC_MP3("audio/mp3", "mp3"),
     APPLICATION_PDF("application/pdf", "pdf"),
     APPLICATION_JSON("application/json", "json"),
     APPLICATION_TEMPLATE("text/html", "template", new TemplateSerialiser()),
